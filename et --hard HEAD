@@ -1,0 +1,15 @@
+[33m3c12b62[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mAutonomusExperimental[m[33m)[m Added limelight support via Network tables; added small demo where the robot points to the nearest april tag
+[33md703a17[m[33m ([m[1;31morigin/AutonomusExperimental[m[33m)[m Revert "added documentation"
+[33ma9f52f5[m added documentation
+[33m19c1845[m[33m ([m[1;31morigin/Autonomus-Test-CH[m[33m)[m impliemented a *somewhat* functional autonomus system
+[33m352d120[m added limelight tester
+[33m5de4eb8[m Merge pull request #2 from alsto-tamoto/tds-experiments-20250922
+[33m0475e9b[m[33m ([m[1;31morigin/tds-experiments-20250922[m[33m)[m Moved swerve-baseline out of the prototype directory to the src directory. Reduced the max speed constant since the robot has never been tested off the stand (this reduces the risk of accidental crash!).
+[33m4425e48[m Discovered yagsl always overwrites the CANCoder internal persistent settings, and angle offset in yagsl is in terms of degrees, not rotations. Seems to be roughlyworking now.
+[33m152afb7[m Added another yagsl experiment, but more thorough in getting the configurationn correct. Seems to be closer to working now.
+[33mff04df2[m Added a few prototypes to experiment with while exploring why swerve drive is not working as expected.
+[33m0ed5f05[m[33m ([m[1;31morigin/S01-SwerveModuleStates-5728[m[33m)[m Imported YAGSL Vendordeps, configs, files
+[33mef5b486[m 	new file:   src/U00-CommandTemplate-5728/.gitignore 	new file:   src/U00-CommandTemplate-5728/.vscode/launch.json 	new file:   src/U00-CommandTemplate-5728/.vscode/settings.json 	new file:   src/U00-CommandTemplate-5728/.wpilib/wpilib_preferences.json 	new file:   src/U00-CommandTemplate-5728/WPILib-License.md 	new file:   src/U00-CommandTemplate-5728/build.gradle 	new file:   src/U00-CommandTemplate-5728/gradle/wrapper/gradle-wrapper.jar 	new file:   src/U00-CommandTemplate-5728/gradle/wrapper/gradle-wrapper.properties 	new file:   src/U00-CommandTemplate-5728/gradlew 	new file:   src/U00-CommandTemplate-5728/gradlew.bat 	new file:   src/U00-CommandTemplate-5728/settings.gradle 	new file:   src/U00-CommandTemplate-5728/src/main/deploy/example.txt 	new file:   src/U00-CommandTemplate-5728/src/main/java/frc/robot/Constants.java 	new file:   src/U00-CommandTemplate-5728/src/main/java/frc/robot/Main.java 	new file:   src/U00-CommandTemplate-5728/src/main/java/frc/robot/Robot.java 	new file:   src/U00-CommandTemplate-5728/src/main/java/frc/robot/RobotContainer.java 	new file:   src/U00-CommandTemplate-5728/src/main/java/frc/robot/commands/Autos.java 	new file:   src/U00-CommandTemplate-5728/src/main/java/frc/robot/commands/ExampleCommand.java 	new file:   src/U00-CommandTemplate-5728/src/main/java/frc/robot/subsystems/ExampleSubsystem.java 	new file:   src/U00-CommandTemplate-5728/vendordeps/WPILibNewCommands.json
+[33mf6ec7d9[m Merge pull request #1 from alsto-tamoto/refactor-repo-directories
+[33m1ccf176[m[33m ([m[1;31morigin/refactor-repo-directories[m[33m)[m Refactor the repo to separate src/doc/prototypes folders.
+[33mb0ef14c[m Initial commit
