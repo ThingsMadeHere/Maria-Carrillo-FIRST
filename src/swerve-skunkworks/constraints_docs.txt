@@ -1,0 +1,185 @@
+# AprilTag Constraint System Documentation
+
+## What is a Constraint?
+
+A constraint is a rule or limitation that modifies the robot's movement when an AprilTag is detected. 
+It acts as a virtual boundary or guide that helps the robot maintain specific spatial relationships 
+with AprilTags in its environment. Constraints are particularly useful for:
+
+- Preventing collisions with field elements
+- Maintaining optimal positioning for scoring
+- Ensuring consistent approach angles
+- Creating virtual boundaries or keep-out zones
+
+## How Constraints Work
+
+1. **Detection**: When an AprilTag is detected by the Limelight, the constraint system becomes active
+2. **Evaluation**: All applicable constraints are evaluated in priority order
+3. **Application**: Each constraint modifies the desired movement to stay within its bounds
+4. **Combination**: The final movement is a combination of all active constraints
+
+## Constraint Types
+
+### 1. DistanceConstraint
+Maintains a specific distance range from an AprilTag.
+
+```java
+new DistanceConstraint(
+    tagId,          // int: AprilTag ID (-1 for any tag)
+    minDistance,    // double: Minimum allowed distance (meters)
+    maxDistance,    // double: Maximum allowed distance (meters)
+    influenceDist,  // double: Distance at which constraint starts affecting movement
+    priority        // int: Constraint priority (higher = applied first)
+)
+```
+
+### 2. MaintainOffsetConstraint
+Maintains a specific 2D offset from an AprilTag.
+
+```java
+new MaintainOffsetConstraint(
+    tagId,          // int: AprilTag ID (-1 for any tag)
+    offset,         // Translation2d: Desired (x,y) offset from tag
+    tolerance,      // double: Position tolerance (meters)
+    influenceDist,  // double: Distance at which constraint activates
+    priority        // int: Constraint priority
+)
+```
+
+### 3. RotationConstraint
+Limits the robot's rotation relative to an AprilTag.
+
+```java
+new RotationConstraint(
+    tagId,          // int: AprilTag ID (-1 for any tag)
+    minAngle,       // double: Minimum allowed angle (radians)
+    maxAngle,       // double: Maximum allowed angle (radians)
+    influenceAngle, // double: Angle at which constraint starts affecting rotation
+    priority        // int: Constraint priority
+)
+```
+
+## Priority System
+
+Constraints are applied in order of their priority (highest to lowest). When multiple constraints are active:
+1. Higher priority constraints are applied first
+2. Lower priority constraints can only further restrict movement
+3. Conflicts are resolved in favor of higher priority constraints
+
+## Example Setup
+
+// Keep 1-2m from tag ID 3
+constraintManager.addConstraint(new DistanceConstraint(3, 1.0, 2.0, 3.0, 10));
+
+// Maintain 1.5m in front of tag ID 4
+constraintManager.addConstraint(new MaintainOffsetConstraint(
+    4, new Translation2d(1.5, 0), 0.1, 2.0, 20));
+
+// Limit rotation to ±30° relative to tag ID 5
+constraintManager.addConstraint(new RotationConstraint(
+    5, -Math.PI/6, Math.PI/6, Math.PI/4, 15));
+
+## Troubleshooting
+
+- **Robot not moving as expected**: Check constraint priorities and influence distances
+- **Oscillation near boundaries**: Reduce the influence distance or add damping
+- **Constraints not activating**: Verify AprilTag detection and tag IDs
+- **Unexpected behavior**: Check for conflicting constraints with similar priorities
+
+## Field-Relative Driving
+
+The constraint system is designed to work with field-relative driving. Ensure your swerve drive is properly configured for field-relative control before using constraints.
+
+ * constraintManager.addConstraint(new DistanceConstraint(
+ *     3,      // Tag ID
+ *     1.0,    // Min distance (m)
+ *     3.0,    // Max distance (m)
+ *     4.0,    // Influence distance (m)
+ *     10      // Priority (higher = applied first)
+ * ));
+ * 
+ * // Maintain a specific offset from tag ID 4
+ * constraintManager.addConstraint(new MaintainOffsetConstraint(
+ *     4,                          // Tag ID
+ *     new Translation2d(1.5, 0),  // 1.5m in front, 0m to the side
+ *     0.1,                       // 10cm position tolerance
+ *     2.0,                       // 2m influence distance
+ *     20                         // Priority
+ * ));
+ * 
+ * // Limit rotation relative to tag ID 5
+ * constraintManager.addConstraint(new RotationConstraint(
+ *     5,                          // Tag ID
+ *     -Math.PI/4,                 // Min angle (-45°)
+ *     Math.PI/4,                  // Max angle (45°)
+ *     Math.PI/2,                  // 90° influence angle
+ *     15                         // Priority
+ * ));
+ * 
+ * Note: The constraint system is designed to work with field-relative driving.
+ * Make sure your swerve drive is configured for field-relative control.
+ */
+public class ConstrainedDriveCommand extends Command {
+    // ... existing code ...
+
+    /**
+     * Creates a new ConstrainedDriveCommand with the specified input suppliers.
+     * 
+     * The command will automatically apply any added constraints when an AprilTag
+     * is detected. The constraints will modify the input from the suppliers to
+     * enforce the specified movement limits.
+     * 
+     * @param swerve The swerve subsystem to control
+     * @param limelight The limelight subsystem for AprilTag detection
+     * @param xSupplier Supplier for forward/backward movement (-1.0 to 1.0)
+     * @param ySupplier Supplier for left/right movement (-1.0 to 1.0)
+     * @param rotSupplier Supplier for rotation (-1.0 to 1.0)
+     */
+    public ConstrainedDriveCommand(
+            SwerveSubsystem swerve,
+            LimelightSubsystem limelight,
+            DoubleSupplier xSupplier,
+            DoubleSupplier ySupplier,
+            DoubleSupplier rotSupplier) {
+        this.swerve = swerve;
+        this.xSupplier = xSupplier;
+        this.ySupplier = ySupplier;
+        this.rotSupplier = rotSupplier;
+        
+        // Initialize constraint manager
+        this.constraintManager = new AprilTagConstraintManager(limelight);
+        
+        /*
+         * Example constraints (customize these for your needs)
+         * 
+         * Constraints are applied in priority order (higher priority first).
+         * Each constraint can be configured with:
+         * - tagId: The AprilTag ID to apply the constraint to (-1 for any tag)
+         * - min/max values: The bounds of the constraint
+         * - influence: How far from the boundary the constraint starts taking effect
+         * - priority: Order in which constraints are applied (higher = applied first)
+         */
+        
+        // Keep between 1m and 3m from tag with ID 3
+        constraintManager.addConstraint(new DistanceConstraint(
+            3,      // Tag ID
+            1.0,    // Min distance (m) - robot won't get closer than this
+            3.0,    // Max distance (m) - robot won't go further than this
+            4.0,    // Influence distance (m) - distance at which constraint starts affecting movement
+            10      // Priority - higher numbers are applied first
+        ));
+        
+        // Maintain a specific offset from tag with ID 4
+        constraintManager.addConstraint(new MaintainOffsetConstraint(
+            4,                          // Tag ID
+            new Translation2d(1.5, 0),  // Desired offset (1.5m in front, 0m to the side)
+            0.1,                       // Position tolerance (m)
+            2.0,                       // Influence distance (m)
+            20                         // Priority (higher than distance constraint)
+        ));
+        
+        // ... rest of the constructor ...
+    }
+
+    // ... rest of the class ...
+}
