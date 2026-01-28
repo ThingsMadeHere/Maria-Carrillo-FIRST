@@ -19,7 +19,10 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.ShootCommand;
 import frc.robot.subsystems.swervedrive.SwerveSubsystem;
+import frc.robot.subsystems.LauncherPhysicsSubsystem;
+import frc.robot.subsystems.ShooterSubsystem;
 import java.io.File;
 import swervelib.SwerveInputStream;
 
@@ -32,10 +35,17 @@ public class RobotContainer
 {
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  final         CommandXboxController driverXbox = new CommandXboxController(0);
+  final CommandXboxController driverXbox = new CommandXboxController(0);
+  
   // The robot's subsystems and commands are defined here...
-  private final SwerveSubsystem       drivebase  = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(),
-                                                                                "swerve/neo"));
+  private final SwerveSubsystem drivebase = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve/neo"));
+  
+  // Shooter subsystems
+  private final LauncherPhysicsSubsystem launcher = new LauncherPhysicsSubsystem();
+  private final ShooterSubsystem shooter = new ShooterSubsystem(launcher);
+  
+  // Shooter command with target RPM (adjust as needed)
+  private final double SHOOTER_TARGET_RPM = 3000.0; // Example value, adjust based on your needs
 
   /**
    * Converts driver input into a field-relative ChassisSpeeds that is controlled by angular velocity.
@@ -166,16 +176,22 @@ public class RobotContainer
       driverXbox.y().whileTrue(drivebase.driveToDistanceCommand(1.0, 0.2));
       driverXbox.start().onTrue((Commands.runOnce(drivebase::zeroGyro)));
       driverXbox.back().whileTrue(drivebase.centerModulesCommand());
-      driverXbox.leftBumper().onTrue(Commands.none());
-      driverXbox.rightBumper().onTrue(Commands.none());
-    } else
+      
+      // Right bumper for testing shooter
+      driverXbox.rightBumper().whileTrue(new ShootCommand(shooter, SHOOTER_TARGET_RPM));
+    } 
+    else 
     {
-      driverXbox.a().onTrue((Commands.runOnce(drivebase::zeroGyro)));
+      // Normal teleop bindings
+      driverXbox.a().onTrue(Commands.runOnce(drivebase::zeroGyro));
       driverXbox.x().onTrue(Commands.runOnce(drivebase::addFakeVisionReading));
-      driverXbox.start().whileTrue(Commands.none());
-      driverXbox.back().whileTrue(Commands.none());
+      
+      // Right trigger to shoot
+      driverXbox.rightTrigger(0.5)  // 50% trigger threshold
+          .whileTrue(new ShootCommand(shooter, SHOOTER_TARGET_RPM));
+          
+      // Left bumper to lock wheels
       driverXbox.leftBumper().whileTrue(Commands.runOnce(drivebase::lock, drivebase).repeatedly());
-      driverXbox.rightBumper().onTrue(Commands.none());
     }
 
   }
